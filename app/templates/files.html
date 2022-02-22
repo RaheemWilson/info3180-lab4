@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block main %}
+
+<ul class="images">
+    {% if images %}
+        {% for image in images %}
+            <li>
+                <img src="{{ url_for('get_image', filename=image) }}" alt="File">
+            </li>
+        {% endfor %}
+    {% endif %}
+</ul>
+
+{% endblock %}

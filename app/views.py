@@ -4,10 +4,12 @@ Jinja2 Documentation:    http://jinja.pocoo.org/2/documentation/
 Werkzeug Documentation:  http://werkzeug.pocoo.org/documentation/
 This file creates your application.
 """
+from crypt import methods
 import os
 from app import app
 from flask import render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.utils import secure_filename
+from flask import send_from_directory
 from .forms import UploadForm
 
 
@@ -35,18 +37,34 @@ def upload():
     # Instantiate your form class
     upload_form = UploadForm()
     # Validate file upload on submit
+    
     if request.method == 'POST':
         # Get file data and save to your uploads folder
         if upload_form.validate_on_submit():
-            file = request.files['file']
+            file = upload_form.file_upload.data
             filename = secure_filename(file.filename)
             file.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
-
-        flash('File Saved', 'success')
-        return redirect(url_for('home'))
+            flash('File Saved', 'success')
+            return redirect(url_for('home'))
 
     return render_template('upload.html', form=upload_form)
 
+
+def  get_uploaded_images():
+    path = os.path.join(os.getcwd(),app.config["UPLOAD_FOLDER"] )
+    return [file for subdir, dirs, files in os.walk(path) for file in files]
+
+@app.route('/uploads/<filename>')
+def get_image(filename):
+    return send_from_directory(os.path.join(os.getcwd(), app.config['UPLOAD_FOLDER']), filename)
+    
+
+@app.route("/files", methods=['GET', 'POST'])
+def files():
+    if not session.get('logged_in'):
+        abort(401)
+
+    return render_template('files.html', images=get_uploaded_images())
 
 @app.route('/login', methods=['POST', 'GET'])
 def login():
